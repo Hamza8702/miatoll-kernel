@@ -1,0 +1,75 @@
+name: Miatoll Kernel Builder (Android 15 & KVM)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bc bison flex libssl-dev libelf-dev clang llvm lld libncurses-dev ccache git zip python3
+
+      - name: Fetch Toolchain (Proton Clang)
+        run: |
+          git clone --depth=1 https://github.com/kdrag0n/proton-clang.git $(pwd)/proton-clang
+
+      - name: Configure and Patch Kernel
+        env:
+          ARCH: arm64
+        run: |
+          OUT_DIR=out
+          DEFCONFIG=vendor/curtana_defconfig
+          mkdir -p $OUT_DIR
+          make O=$OUT_DIR $DEFCONFIG
+          cat >> $OUT_DIR/.config <<EOF
+          CONFIG_BPF_SYSCALL=y
+          CONFIG_BPF_JIT=y
+          CONFIG_CGROUP_BPF=y
+          CONFIG_HIERARCHICAL_COPY_AREA=y
+          CONFIG_NET_CLS_BPF=y
+          CONFIG_NET_ACT_BPF=y
+          CONFIG_XIAOMI_TOUCH=y
+          CONFIG_DRM_PANEL_HUAXING=y
+          CONFIG_KVM=y
+          CONFIG_VIRTUALIZATION=y
+          CONFIG_KVM_ARM_HOST=y
+          CONFIG_KVM_ARM_PMU=y
+          CONFIG_VHOST_NET=y
+          EOF
+          make O=$OUT_DIR olddefconfig
+
+      - name: Start Compilation
+        env:
+          ARCH: arm64
+          PATH: ${{ github.workspace }}/proton-clang/bin:${{ env.PATH }}
+        run: |
+          OUT_DIR=out
+          make -j$(nproc --all) O=$OUT_DIR \
+              CC=clang \
+              CROSS_COMPILE=aarch64-linux-gnu- \
+              CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+              AR=llvm-ar \
+              NM=llvm-nm \
+              OBJCOPY=llvm-objcopy \
+              OBJDUMP=llvm-objdump \
+              STRIP=llvm-strip \
+              LD=ld.lld
+
+      - name: Package with AnyKernel3
+        run: |
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/ || cp out/arch/arm64/boot/Image.gz AnyKernel3/
+          cd AnyKernel3
+          zip -r9 ../Miatoll-Android15-KVM-Kernel.zip * -x .git README.md
+
+      - name: Upload Flashable Kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kernel-Zip-Package
+          path: Miatoll-Android15-KVM-Kernel.zip
