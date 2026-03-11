@@ -26,7 +26,7 @@ jobs:
         run: |
           OUT_DIR=out
           # Pointing directly to your discovered path
-          DEFCONFIG=vendor/curtana_defconfig
+          DEFCONFIG=vendor/xiaomi/miatoll_defconfig
           mkdir -p $OUT_DIR
           make O=$OUT_DIR ARCH=arm64 $DEFCONFIG
           
