@@ -38,15 +38,6 @@ jobs:
           # 1. Configuration (Matching your script path)
           make O=out ARCH=arm64 vendor/xiaomi/miatoll_defconfig
           
-          # 2. Add KVM and Android 15 Features
-          scripts/config --file out/.config -e KVM
-          scripts/config --file out/.config -e VIRTUALIZATION
-          scripts/config --file out/.config -e KVM_ARM_HOST
-          scripts/config --file out/.config -e KVM_ARM_PMU
-          scripts/config --file out/.config -e VHOST_NET
-          scripts/config --file out/.config -e BPF_SYSCALL
-          scripts/config --file out/.config -e BPF_JIT
-          
           # 3. Start Compilation
           make -j$(nproc --all) O=out \
                       ARCH=arm64 \
