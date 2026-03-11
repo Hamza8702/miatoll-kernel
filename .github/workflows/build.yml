@@ -1,3 +1,4 @@
+
 name: Miatoll Kernel Builder (Android 15 & KVM)
 
 on:
@@ -24,9 +25,12 @@ jobs:
           ARCH: arm64
         run: |
           OUT_DIR=out
+          # Pointing directly to your discovered path
           DEFCONFIG=vendor/curtana_defconfig
           mkdir -p $OUT_DIR
-          make O=$OUT_DIR $DEFCONFIG
+          make O=$OUT_DIR ARCH=arm64 $DEFCONFIG
+          
+          # Injecting KVM and Android 15 requirements
           cat >> $OUT_DIR/.config <<EOF
           CONFIG_BPF_SYSCALL=y
           CONFIG_BPF_JIT=y
@@ -42,7 +46,7 @@ jobs:
           CONFIG_KVM_ARM_PMU=y
           CONFIG_VHOST_NET=y
           EOF
-          make O=$OUT_DIR olddefconfig
+          make O=$OUT_DIR ARCH=arm64 olddefconfig
 
       - name: Start Compilation
         env:
@@ -51,7 +55,9 @@ jobs:
         run: |
           OUT_DIR=out
           make -j$(nproc --all) O=$OUT_DIR \
+              ARCH=arm64 \
               CC=clang \
+              CLANG_TRIPLE=aarch64-linux-gnu- \
               CROSS_COMPILE=aarch64-linux-gnu- \
               CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
               AR=llvm-ar \
@@ -64,7 +70,12 @@ jobs:
       - name: Package with AnyKernel3
         run: |
           git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
-          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/ || cp out/arch/arm64/boot/Image.gz AnyKernel3/
+          # Check for Image.gz-dtb or Image.gz and copy it
+          if [ -f out/arch/arm64/boot/Image.gz-dtb ]; then
+            cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          elif [ -f out/arch/arm64/boot/Image.gz ]; then
+            cp out/arch/arm64/boot/Image.gz AnyKernel3/
+          fi
           cd AnyKernel3
           zip -r9 ../Miatoll-Android15-KVM-Kernel.zip * -x .git README.md
 
