@@ -36,7 +36,8 @@ jobs:
           mkdir -p out
           
           # 1. Configuration (Matching your script path)
-          make O=out ARCH=arm64 vendor/xiaomi/miatoll_defconfig
+          make O=out ARCH=arm64 vendor/xiaomi/hamza.config
+          make O=out ARCH=arm64 olddefconfig
           
           # 3. Start Compilation
           make -j$(nproc --all) O=out \
