@@ -16,7 +16,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc build-essential flex bison lld llvm clang libssl-dev libelf-dev setup-tools zip curltar
+          sudo apt-get install -y bc build-essential flex bison lld llvm clang libssl-dev libelf-dev setup-tools zip curl tar
 
       - name: Execute Build Script
         run: |
