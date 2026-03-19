@@ -44,7 +44,7 @@ jobs:
           mkdir -p out
           
           # Step 1: Generate base config
-          make O=out ARCH=arm64 vendor/xiaomi/miatoll.config
+          make O=out ARCH=arm64 vendor/xiaomi/Ham.config
           
           # Step 2: Finalize configuration before build
           # This ensures all merged configs (if any) are validated
