@@ -264,33 +264,4 @@ compile_kernel() {
                       CROSS_COMPILE="aarch64-linux-android-" \
                       CROSS_COMPILE_ARM32="arm-linux-androideabi-" \
                       LD=ld.lld \
-                      CONFIG_NO_ERROR_ON_MISMATCH=y
-}
-
-# Packaging Function
-package_kernel() {
-    # Check for Image.gz or Image
-    ZIMAGE=""
-    if [ -f "$OUT_DIR/arch/arm64/boot/Image.gz" ]; then
-        ZIMAGE="$OUT_DIR/arch/arm64/boot/Image.gz"
-    elif [ -f "$OUT_DIR/arch/arm64/boot/Image" ]; then
-        ZIMAGE="$OUT_DIR/arch/arm64/boot/Image"
-    fi
-
-    if [ -n "$ZIMAGE" ]; then
-        echo "--> Kernel compiled successfully!"
-        git clone --depth=1 https://github.com/Amritorock/AnyKernel3 -b r5x AnyKernel
-        cp "$ZIMAGE" AnyKernel/
-        cd AnyKernel
-        zip -r9 "../Stormbreaker-miatoll-${TIMESTAMP}.zip" *
-        cd ..
-        echo "--> Zip created: Stormbreaker-miatoll-${TIMESTAMP}.zip"
-    else
-        echo "--> Error: Kernel image (Image.gz or Image) not found!"
-        exit 1
-    fi
-}
-
-setup_toolchains
-compile_kernel
-package_kernel
+                      CONFIG_NO_ERROR_ON_MISMA
