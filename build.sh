@@ -1,48 +1,70 @@
 #!/bin/bash
-function compile()
-{
-source ~/.bashrc && source ~/.profile
-export LC_ALL=C && export USE_CCACHE=1
-ccache -M 25G
-TANGGAL=$(date +"%Y%m%d-%H")
+# Kernel build script for Miatoll
+
+set -e
+
+# Configuration
 export ARCH=arm64
-export KBUILD_BUILD_HOST=android-build
-export KBUILD_BUILD_USER="kardebayan"
-clangbin=clang/bin/clang
-if ! [ -a $clangbin ]; then git clone --depth=1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 clang
-fi
-gcc64bin=gcc64/bin/aarch64-linux-android-as
-if ! [ -a $gcc64bin ]; then git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 gcc64
-fi
-gcc32bin=gcc32/bin/arm-linux-androideabi-as
-if ! [ -a $gcc32bin ]; then git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 gcc32
-fi
-rm -rf AnyKernel
-PATH="${PWD}/clang/bin:${PATH}:${PWD}/gcc32/bin:${PATH}:${PWD}/gcc64/bin:${PATH}" \
-make -j$(nproc --all) O=out ARCH=arm64 vendor/xiaomi/miatoll.config \
-make -j$(nproc --all) O=out \
+export KBUILD_BUILD_HOST=GitHub-Actions
+export KBUILD_BUILD_USER="Hamza8702"
+TIMESTAMP=$(date +"%Y%m%d-%H")
+OUT_DIR="out"
+
+# Clone Toolchains if not exist
+setup_toolchains() {
+    echo "--> Cloning toolchains..."
+    if [ ! -d "clang" ]; then
+        git clone --depth=1 https://github/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 clang
+    fi
+    if [ ! -d "gcc64" ]; then
+        git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 gcc64
+    fi
+    if [ ! -d "gcc32" ]; then
+        git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 gcc32
+    fi
+}
+
+# Export Paths
+export PATH="${PWD}/clang/bin:${PWD}/gcc64/bin:${PWD}/gcc32/bin:${PATH}"
+
+# Compile Function
+compile_kernel() {
+    echo "--> Starting configuration..."
+    mkdir -p $OUT_DIR
+    
+    # Generate .config (Checking for specific vendor path)
+    make -j$(nproc --all) O=$OUT_DIR ARCH=arm64 vendor/xiaomi/miatoll.config || \
+    make -j$(nproc --all) O=$OUT_DIR ARCH=arm64 miatoll_defconfig
+
+    echo "--> Starting compilation..."
+    make -j$(nproc --all) O=$OUT_DIR \
                       ARCH=arm64 \
                       CC="clang" \
                       CLANG_TRIPLE=aarch64-linux-gnu- \
-                      CROSS_COMPILE="${PWD}/gcc64/bin/aarch64-linux-android-" \
-                      CROSS_COMPILE_ARM32="${PWD}/gcc32/bin/arm-linux-androideabi-" \
+                      CROSS_COMPILE="aarch64-linux-android-" \
+                      CROSS_COMPILE_ARM32="arm-linux-androideabi-" \
                       LD=ld.lld \
                       CONFIG_NO_ERROR_ON_MISMATCH=y
 }
-function zupload()
-{
-zimage=out/arch/arm64/boot/Image.gz
-if ! [ -a $zimage ];
-then
-echo  " Failed To Compile Kernel"
-else
-echo -e " Kernel Compile Successful"
-git clone --depth=1 https://github.com/Amritorock/AnyKernel3 -b r5x AnyKernel
-cp out/arch/arm64/boot/Image.gz AnyKernel
-cd AnyKernel
-zip -r9 Stormbreaker-miatoll-${TANGGAL}.zip *
-cd ../
-fi
+
+# Packaging Function
+package_kernel() {
+    ZIMAGE="$OUT_DIR/arch/arm64/boot/Image.gz"
+    if [ -f "$ZIMAGE" ]; then
+        echo "--> Kernel compiled successfully!"
+        git clone --depth=1 https://github.com/Amritorock/AnyKernel3 -b r5x AnyKernel
+        cp "$ZIMAGE" AnyKernel/
+        cd AnyKernel
+        zip -r9 "../Stormbreaker-miatoll-${TIMESTAMP}.zip" *
+        cd ..
+        echo "--> Zip created: Stormbreaker-miatoll-${TIMESTAMP}.zip"
+    else
+        echo "--> Error: Kernel image not found!"
+        exit 1
+    fi
 }
-compile
-zupload
+
+setup_toolchains
+compile_kernel
+package_kernel
+
