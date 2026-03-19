@@ -19,6 +19,7 @@ if ! [ -a $gcc32bin ]; then git clone --depth=1 https://github.com/LineageOS/and
 fi
 rm -rf AnyKernel
 PATH="${PWD}/clang/bin:${PATH}:${PWD}/gcc32/bin:${PATH}:${PWD}/gcc64/bin:${PATH}" \
+make -j$(nproc --all) O=out ARCH=arm64 vendor/xiaomi/miatoll.config \
 make -j$(nproc --all) O=out \
                       ARCH=arm64 \
                       CC="clang" \
