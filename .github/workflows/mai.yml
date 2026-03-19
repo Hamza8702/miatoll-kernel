@@ -27,8 +27,8 @@ jobs:
 
       - name: Execute Build Script
         run: |
-          chmod +x Hamza.sh
-          ./Hamza.sh
+          chmod +x H.sh
+          ./H.sh
         env:
           KBUILD_BUILD_USER: Hamza8702
           KBUILD_BUILD_HOST: GitHub-Actions
