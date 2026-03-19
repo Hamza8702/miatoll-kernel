@@ -41,7 +41,7 @@ jobs:
           export PATH="${PWD}/clang/bin:${PWD}/gcc64/bin:${PWD}/gcc32/bin:${PATH}"
           
           # Initialize Config
-          make O=out ARCH=arm64 vendor/xiaomi/hamza.config
+          make O=out ARCH=arm64 vendor/xiaomi/Hamza.config
           make O=out ARCH=arm64 olddefconfig
           
           # Build Process
