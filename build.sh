@@ -33,7 +33,7 @@ compile_kernel() {
     mkdir -p $OUT_DIR
     
     # Generate .config (Checking for specific vendor path)
-    make -j$(nproc --all) O=$OUT_DIR ARCH=arm64 vendor/xiaomi/miatoll.config
+    make -j$(nproc --all) O=$OUT_DIR ARCH=arm64 vendor/Xiaomi/miatoll.config
 
     echo "--> Starting compilation..."
     make -j$(nproc --all) O=$OUT_DIR \
