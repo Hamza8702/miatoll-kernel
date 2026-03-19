@@ -3,53 +3,29 @@ name: Miatoll Kernel Build CI
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ "main", "master" ]
 
 jobs:
-  build_kernel:
-    name: Build Kernel for Miatoll
+  build:
+    name: Build Kernel Task
     runs-on: ubuntu-latest
-    
-    env:
-      CC: clang
-      ARCH: arm64
-      SUBARCH: arm64
-      KBUILD_BUILD_USER: Hamza8702
-      KBUILD_BUILD_HOST: GitHub-Actions
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            bc build-essential flex bison lld llvm clang \
-            libssl-dev libelf-dev libncurses-dev git \
-            python3 python-is-python3 zip tar curl
+          sudo apt-get install -y bc build-essential flex bison lld llvm clang libssl-dev libelf-dev setup-tools zip curltar
 
-      - name: Setup Toolchain
-        run: |
-          echo "Checking for toolchain in build script..."
-          # You can add specific toolchain clones here if build.sh doesn't handle it.
-
-      - name: Run Build Script
+      - name: Execute Build Script
         run: |
           chmod +x build.sh
           ./build.sh
-        continue-on-error: false
 
-      - name: Upload Build Artifacts
+      - name: Upload Kernel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Miatoll-Kernel-Release
-          path: |
-            out/arch/arm64/boot/Image*
-            out/arch/arm64/boot/dtb*
-            out/*.zip
-            *.zip
-          if-no-files-found: warn
+          name: Stormbreaker-Kernel-Miatoll
+          path: "*.zip"
+
