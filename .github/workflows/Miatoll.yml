@@ -1,0 +1,76 @@
+name: Build Stormbreaker Kernel for Miatoll
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04 # Older Ubuntu for better GCC 4.9 compatibility
+    
+    steps:
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y bc build-essential flex bison lld libssl-dev libelf-dev \
+          ccache libncurses-dev python3 python-is-python3 zip git
+
+      - name: Download Toolchains
+        run: |
+          # Download Clang
+          git clone --depth=1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 clang
+          # Download GCC 64-bit
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 gcc64
+          # Download GCC 32-bit
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 gcc32
+
+      - name: Compile Kernel
+        env:
+          ARCH: arm64
+          KBUILD_BUILD_HOST: android-build
+          KBUILD_BUILD_USER: "kardebayan"
+          USE_CCACHE: 1
+        run: |
+          # Set Paths for Toolchains
+          export PATH="${PWD}/clang/bin:${PWD}/gcc64/bin:${PWD}/gcc32/bin:${PATH}"
+          
+          # Initialize Config
+          make O=out ARCH=arm64 vendor/xiaomi/hamza.config
+          make O=out ARCH=arm64 olddefconfig
+          
+          # Build Process
+          make -j$(nproc --all) O=out \
+                      ARCH=arm64 \
+                      CC="clang" \
+                      CLANG_TRIPLE=aarch64-linux-gnu- \
+                      CROSS_COMPILE="${PWD}/gcc64/bin/aarch64-linux-android-" \
+                      CROSS_COMPILE_ARM32="${PWD}/gcc32/bin/arm-linux-androideabi-" \
+                      LD=ld.lld \
+                      CONFIG_NO_ERROR_ON_MISMATCH=y
+
+      - name: Package with AnyKernel3
+        run: |
+          TANGGAL=$(date +"%Y%m%d-%H")
+          if [ -f out/arch/arm64/boot/Image.gz ]; then
+            git clone --depth=1 https://github.com/Amritorock/AnyKernel3 -b r5x AnyKernel
+            cp out/arch/arm64/boot/Image.gz AnyKernel/
+            cd AnyKernel
+            zip -r9 ../Stormbreaker-miatoll-${TANGGAL}.zip *
+            cd ..
+            echo "ZIP_NAME=Stormbreaker-miatoll-${TANGGAL}.zip" >> $GITHUB_ENV
+          else
+            echo "Kernel image not found! Build failed."
+            exit 1
+          fi
+
+      - name: Upload Kernel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stormbreaker-Miatoll-Kernel
+          path: ./*.zip
