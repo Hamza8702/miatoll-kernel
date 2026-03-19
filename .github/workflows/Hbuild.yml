@@ -30,10 +30,6 @@ jobs:
           mkdir -p out
           
           # 1. Configure with the exact path you found
-          #!/bin/bash
-function compile()
-{
-source ~/.bashrc && source ~/.profile
 export LC_ALL=C && export USE_CCACHE=1
 ccache -M 25G
 TANGGAL=$(date +"%Y%m%d-%H")
