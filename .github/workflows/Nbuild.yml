@@ -19,8 +19,6 @@ jobs:
         run: |
           git clone --depth=1 https://github.com/kdrag0n/proton-clang.git ${{ github.workspace }}/proton-clang
 
-function compile()
-{
 source ~/.bashrc && source ~/.profile
 export LC_ALL=C && export USE_CCACHE=1
 ccache -M 25G
